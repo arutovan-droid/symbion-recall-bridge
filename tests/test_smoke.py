@@ -16,6 +16,16 @@ def test_recall_hot_store_smoke(tmp_path):
             operator_essence_delta={"dominant_crystal_principle": {"packet_id": "p1"}},
             open_threads=[{"thread_id": "t1"}],
             state_vector_shifts=[{"shift_id": "sv1"}],
+            metadata={
+                "session_envelope": {
+                    "operator_id": "op1",
+                    "session_id": "s1",
+                    "recall_loaded": False,
+                    "publish_count": 1,
+                    "last_event_type": "alchemist.ingress.transmuted",
+                    "last_payload_keys": ["state_vector"],
+                }
+            },
         )
     )
     store.save_hot_snapshot(
@@ -59,6 +69,10 @@ def test_recall_hot_store_smoke(tmp_path):
     warm = store.load_warm_essence("op1")
     assert warm.operator_id == "op1"
     assert warm.history[0]["session_id"] == "s1"
+    assert warm.history[0]["operator_id"] == "op1"
+    assert warm.history[0]["publish_count"] == 1
+    assert warm.history[0]["last_event_type"] == "alchemist.ingress.transmuted"
+    assert "state_vector" in warm.history[0]["last_payload_keys"]
 
     context = store.get_context("op1", max_open_threads=5, max_state_vector_shifts=5)
     assert context["operator_id"] == "op1"
