@@ -1,4 +1,4 @@
-from symbion_recall_bridge import RecallHotStore, RecallSnapshot
+from symbion_recall_bridge import RecallHotStore, RecallSnapshot, snapshot_from_distillation
 
 
 def test_recall_hot_store_smoke(tmp_path):
@@ -70,6 +70,43 @@ def test_recall_hot_store_smoke(tmp_path):
     assert loaded["operator_id"] == "op1"
     assert len(loaded["snapshots"]) == 3
     assert loaded["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
+
+    distilled = {
+        "operator_essence_delta": {
+            "dominant_crystal_principle": {"packet_id": "p9", "principle": "restore power"},
+            "dominant_state_shift": {"packet_id": "p9", "shift_type": "continuity_shift"},
+            "dominant_open_thread": {"packet_id": "p9", "thread_type": "unresolved_thread"},
+        },
+        "open_threads": [
+            {"packet_id": "p9", "thread_type": "unresolved_thread", "payload": {"continuity_event": {"open_thread": True}}}
+        ],
+        "state_vector_shifts": [
+            {"packet_id": "p9", "shift_type": "continuity_shift", "payload": {"state_vector": {"mode": "recovery"}}}
+        ],
+        "crystal_candidates": [
+            {"packet_id": "p9", "principle": "restore power", "support": {}}
+        ],
+        "metadata": {
+            "packets_total": 1
+        },
+    }
+
+    adapted = snapshot_from_distillation(
+        operator_id="op2",
+        session_id="s9",
+        timestamp_utc="2026-03-22T14-00-00Z",
+        distilled=distilled,
+    )
+
+    assert adapted.operator_id == "op2"
+    assert adapted.session_id == "s9"
+    assert adapted.operator_essence_delta["dominant_crystal_principle"]["packet_id"] == "p9"
+    assert adapted.metadata["distilled_packets_total"] == 1
+    assert adapted.metadata["distilled_crystal_count"] == 1
+
+    store.save_hot_snapshot(adapted)
+    op2 = store.get_context("op2")
+    assert op2["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p9"
 
     store.purge_operator("op1")
     purged = store.load_hot_context("op1")
