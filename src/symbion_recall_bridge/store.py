@@ -163,12 +163,15 @@ class RecallHotStore:
         ]
 
         latest = loaded[-1] if loaded else None
-        recent_threads: List[Dict[str, Any]] = list(warm.open_threads)
-        recent_shifts: List[Dict[str, Any]] = list(warm.state_vector_shifts)
+        recent_threads: List[Dict[str, Any]] = []
+        recent_shifts: List[Dict[str, Any]] = []
 
-        for snap in loaded[-3:]:
+        for snap in reversed(loaded[-3:]):
             recent_threads.extend(snap.open_threads)
             recent_shifts.extend(snap.state_vector_shifts)
+
+        recent_threads.extend(warm.open_threads)
+        recent_shifts.extend(warm.state_vector_shifts)
 
         recent_threads = _dedupe_dict_list(recent_threads)
         recent_shifts = _dedupe_dict_list(recent_shifts)
