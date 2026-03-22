@@ -1,0 +1,13 @@
+[project]
+name = "symbion-recall-bridge"
+version = "0.1.0"
+description = "Blind recall bridge for distilled session snapshots"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
