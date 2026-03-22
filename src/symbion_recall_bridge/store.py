@@ -32,6 +32,78 @@ class RecallHotStore:
 
         return file_path
 
+    def get_status(self, operator_id: str) -> Dict[str, Any]:
+        operator_dir = self._operator_dir(operator_id)
+        if not operator_dir.exists():
+            return {
+                "operator_id": operator_id,
+                "hot_exists": False,
+                "snapshots_count": 0,
+                "latest_session_id": None,
+                "latest_timestamp_utc": None,
+            }
+
+        snapshots = sorted(operator_dir.glob("*.json"))
+        latest_data: Dict[str, Any] | None = None
+        if snapshots:
+            latest_data = json.loads(snapshots[-1].read_text(encoding="utf-8"))
+
+        return {
+            "operator_id": operator_id,
+            "hot_exists": True,
+            "snapshots_count": len(snapshots),
+            "latest_session_id": latest_data.get("session_id") if latest_data else None,
+            "latest_timestamp_utc": latest_data.get("timestamp_utc") if latest_data else None,
+        }
+
+    def get_context(
+        self,
+        operator_id: str,
+        max_open_threads: int = 5,
+        max_state_vector_shifts: int = 5,
+    ) -> Dict[str, Any]:
+        operator_dir = self._operator_dir(operator_id)
+        if not operator_dir.exists():
+            return {
+                "operator_id": operator_id,
+                "recall_context": {
+                    "operator_essence_delta": {},
+                    "open_threads": [],
+                    "state_vector_shifts": [],
+                },
+                "caps": {
+                    "max_open_threads": max_open_threads,
+                    "max_state_vector_shifts": max_state_vector_shifts,
+                },
+            }
+
+        snapshots = sorted(operator_dir.glob("*.json"))
+        loaded: List[RecallSnapshot] = [
+            RecallSnapshot.from_snapshot_dict(json.loads(path.read_text(encoding="utf-8")))
+            for path in snapshots
+        ]
+
+        latest = loaded[-1] if loaded else None
+        recent_threads: List[Dict[str, Any]] = []
+        recent_shifts: List[Dict[str, Any]] = []
+
+        for snap in loaded[-3:]:
+            recent_threads.extend(snap.open_threads)
+            recent_shifts.extend(snap.state_vector_shifts)
+
+        return {
+            "operator_id": operator_id,
+            "recall_context": {
+                "operator_essence_delta": latest.operator_essence_delta if latest else {},
+                "open_threads": recent_threads[:max_open_threads],
+                "state_vector_shifts": recent_shifts[:max_state_vector_shifts],
+            },
+            "caps": {
+                "max_open_threads": max_open_threads,
+                "max_state_vector_shifts": max_state_vector_shifts,
+            },
+        }
+
     def load_hot_context(self, operator_id: str) -> Dict[str, Any]:
         operator_dir = self._operator_dir(operator_id)
         if not operator_dir.exists():
