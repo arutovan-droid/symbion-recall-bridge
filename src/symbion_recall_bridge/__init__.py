@@ -1,4 +1,5 @@
 from .adapters import snapshot_from_distillation
+from .api import app, create_app
 from .store import RecallHotStore
 from .types import RecallSnapshot, WarmEssence
 
@@ -7,4 +8,6 @@ __all__ = [
     "RecallSnapshot",
     "WarmEssence",
     "snapshot_from_distillation",
+    "create_app",
+    "app",
 ]

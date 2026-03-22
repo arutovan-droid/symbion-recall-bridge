@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "Blind recall bridge for distilled session snapshots"
 readme = "README.md"
 requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
 
 [build-system]
 requires = ["setuptools>=61"]
