@@ -28,3 +28,27 @@ class RecallSnapshot:
             state_vector_shifts=list(data.get("state_vector_shifts", [])),
             metadata=dict(data.get("metadata", {})),
         )
+
+
+@dataclass
+class WarmEssence:
+    operator_id: str
+    operator_essence_delta: Dict[str, Any] = field(default_factory=dict)
+    open_threads: List[Dict[str, Any]] = field(default_factory=list)
+    state_vector_shifts: List[Dict[str, Any]] = field(default_factory=list)
+    history: List[Dict[str, Any]] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_snapshot_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    @classmethod
+    def from_snapshot_dict(cls, data: Dict[str, Any]) -> "WarmEssence":
+        return cls(
+            operator_id=str(data.get("operator_id", "unknown")),
+            operator_essence_delta=dict(data.get("operator_essence_delta", {})),
+            open_threads=list(data.get("open_threads", [])),
+            state_vector_shifts=list(data.get("state_vector_shifts", [])),
+            history=list(data.get("history", [])),
+            metadata=dict(data.get("metadata", {})),
+        )

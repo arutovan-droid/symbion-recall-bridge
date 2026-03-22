@@ -2,7 +2,11 @@ from symbion_recall_bridge import RecallHotStore, RecallSnapshot
 
 
 def test_recall_hot_store_smoke(tmp_path):
-    store = RecallHotStore(base_dir=tmp_path / "hot", max_snapshots=3)
+    store = RecallHotStore(
+        base_dir=tmp_path / "hot",
+        warm_dir=tmp_path / "warm",
+        max_snapshots=3,
+    )
 
     store.save_hot_snapshot(
         RecallSnapshot(
@@ -49,18 +53,23 @@ def test_recall_hot_store_smoke(tmp_path):
     assert status["hot_exists"] is True
     assert status["snapshots_count"] == 3
     assert status["latest_session_id"] == "s4"
+    assert status["warm_exists"] is True
+    assert status["warm_history_count"] == 1
 
-    context = store.get_context("op1", max_open_threads=2, max_state_vector_shifts=2)
+    warm = store.load_warm_essence("op1")
+    assert warm.operator_id == "op1"
+    assert warm.history[0]["session_id"] == "s1"
+
+    context = store.get_context("op1", max_open_threads=5, max_state_vector_shifts=5)
     assert context["operator_id"] == "op1"
     assert context["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
-    assert len(context["recall_context"]["open_threads"]) == 2
-    assert len(context["recall_context"]["state_vector_shifts"]) == 2
+    assert {"thread_id": "t1"} in context["recall_context"]["open_threads"]
+    assert {"thread_id": "t4"} in context["recall_context"]["open_threads"]
 
     loaded = store.load_hot_context("op1")
     assert loaded["operator_id"] == "op1"
     assert len(loaded["snapshots"]) == 3
     assert loaded["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
-    assert {"thread_id": "t4"} in loaded["recall_context"]["open_threads"]
 
     store.purge_operator("op1")
     purged = store.load_hot_context("op1")
