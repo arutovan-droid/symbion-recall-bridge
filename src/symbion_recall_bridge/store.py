@@ -148,6 +148,7 @@ class RecallHotStore:
                     "operator_essence_delta": warm.operator_essence_delta,
                     "open_threads": warm.open_threads[:max_open_threads],
                     "state_vector_shifts": warm.state_vector_shifts[:max_state_vector_shifts],
+                    "continuity_trend": warm.history[-3:],
                 },
                 "caps": {
                     "max_open_threads": max_open_threads,
@@ -178,6 +179,7 @@ class RecallHotStore:
                 "operator_essence_delta": latest.operator_essence_delta if latest and latest.operator_essence_delta else warm.operator_essence_delta,
                 "open_threads": recent_threads[:max_open_threads],
                 "state_vector_shifts": recent_shifts[:max_state_vector_shifts],
+                "continuity_trend": warm.history[-3:],
             },
             "caps": {
                 "max_open_threads": max_open_threads,

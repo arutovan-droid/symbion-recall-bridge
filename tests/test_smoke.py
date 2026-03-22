@@ -79,6 +79,7 @@ def test_recall_hot_store_smoke(tmp_path):
     assert context["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
     assert {"thread_id": "t1"} in context["recall_context"]["open_threads"]
     assert {"thread_id": "t4"} in context["recall_context"]["open_threads"]
+    assert context["recall_context"]["continuity_trend"][0]["session_id"] == "s1"
 
     loaded = store.load_hot_context("op1")
     assert loaded["operator_id"] == "op1"
