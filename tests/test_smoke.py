@@ -36,6 +36,16 @@ def test_recall_hot_store_smoke(tmp_path):
             operator_essence_delta={"dominant_crystal_principle": {"packet_id": "p2"}},
             open_threads=[{"thread_id": "t2"}],
             state_vector_shifts=[{"shift_id": "sv2"}],
+            metadata={
+                "session_envelope": {
+                    "operator_id": "op1",
+                    "session_id": "s2",
+                    "recall_loaded": True,
+                    "publish_count": None,
+                    "last_event_type": None,
+                    "last_payload_keys": [],
+                }
+            },
         )
     )
     store.save_hot_snapshot(
@@ -59,12 +69,23 @@ def test_recall_hot_store_smoke(tmp_path):
         )
     )
 
+    store.save_hot_snapshot(
+        RecallSnapshot(
+            operator_id="op1",
+            session_id="s5",
+            timestamp_utc="2026-03-22T14-00-00Z",
+            operator_essence_delta={"dominant_crystal_principle": {"packet_id": "p5"}},
+            open_threads=[{"thread_id": "t5"}],
+            state_vector_shifts=[{"shift_id": "sv5"}],
+        )
+    )
+
     status = store.get_status("op1")
     assert status["hot_exists"] is True
     assert status["snapshots_count"] == 3
-    assert status["latest_session_id"] == "s4"
+    assert status["latest_session_id"] == "s5"
     assert status["warm_exists"] is True
-    assert status["warm_history_count"] == 1
+    assert status["warm_history_count"] == 2
 
     warm = store.load_warm_essence("op1")
     assert warm.operator_id == "op1"
@@ -73,18 +94,21 @@ def test_recall_hot_store_smoke(tmp_path):
     assert warm.history[0]["publish_count"] == 1
     assert warm.history[0]["last_event_type"] == "alchemist.ingress.transmuted"
     assert "state_vector" in warm.history[0]["last_payload_keys"]
+    assert warm.history[0]["empty_session"] is False
+
+    assert warm.history[1]["session_id"] == "s2"
+    assert warm.history[1]["empty_session"] is True
 
     context = store.get_context("op1", max_open_threads=5, max_state_vector_shifts=5)
     assert context["operator_id"] == "op1"
-    assert context["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
-    assert {"thread_id": "t1"} in context["recall_context"]["open_threads"]
-    assert {"thread_id": "t4"} in context["recall_context"]["open_threads"]
+    assert context["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p5"
+    assert {"thread_id": "t5"} in context["recall_context"]["open_threads"]
     assert context["recall_context"]["continuity_trend"][0]["session_id"] == "s1"
 
     loaded = store.load_hot_context("op1")
     assert loaded["operator_id"] == "op1"
     assert len(loaded["snapshots"]) == 3
-    assert loaded["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p4"
+    assert loaded["recall_context"]["operator_essence_delta"]["dominant_crystal_principle"]["packet_id"] == "p5"
 
     distilled = {
         "operator_essence_delta": {
@@ -109,7 +133,7 @@ def test_recall_hot_store_smoke(tmp_path):
     adapted = snapshot_from_distillation(
         operator_id="op2",
         session_id="s9",
-        timestamp_utc="2026-03-22T14-00-00Z",
+        timestamp_utc="2026-03-22T15-00-00Z",
         distilled=distilled,
     )
 

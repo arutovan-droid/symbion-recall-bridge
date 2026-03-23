@@ -60,18 +60,21 @@ class RecallHotStore:
         warm.open_threads = _dedupe_dict_list(warm.open_threads + snapshot.open_threads)
         warm.state_vector_shifts = _dedupe_dict_list(warm.state_vector_shifts + snapshot.state_vector_shifts)
         session_envelope = dict(snapshot.metadata.get("session_envelope", {})) if snapshot.metadata else {}
+        lifecycle_record = {
+            "session_id": snapshot.session_id,
+            "timestamp_utc": snapshot.timestamp_utc,
+            "operator_id": snapshot.operator_id,
+            "recall_loaded": session_envelope.get("recall_loaded"),
+            "publish_count": session_envelope.get("publish_count"),
+            "last_event_type": session_envelope.get("last_event_type"),
+            "last_payload_keys": session_envelope.get("last_payload_keys", []),
+        }
 
-        warm.history.append(
-            {
-                "session_id": snapshot.session_id,
-                "timestamp_utc": snapshot.timestamp_utc,
-                "operator_id": snapshot.operator_id,
-                "recall_loaded": session_envelope.get("recall_loaded"),
-                "publish_count": session_envelope.get("publish_count"),
-                "last_event_type": session_envelope.get("last_event_type"),
-                "last_payload_keys": session_envelope.get("last_payload_keys", []),
-            }
+        lifecycle_record["empty_session"] = not bool(
+            lifecycle_record["publish_count"] or lifecycle_record["last_payload_keys"]
         )
+
+        warm.history.append(lifecycle_record)
 
         warm.metadata = {
             "history_count": len(warm.history),
