@@ -179,10 +179,36 @@ class RecallHotStore:
         recent_threads = _dedupe_dict_list(recent_threads)
         recent_shifts = _dedupe_dict_list(recent_shifts)
 
+        effective_essence = (
+            dict(latest.operator_essence_delta) if latest and latest.operator_essence_delta
+            else dict(warm.operator_essence_delta)
+        )
+
+        latest_crystal = dict((latest.operator_essence_delta or {}).get("dominant_crystal_principle", {}) or {}) if latest else {}
+        resolved_crystal = latest_crystal
+
+        if not resolved_crystal:
+            recent_hot = loaded[-3:] if loaded else []
+            recent_hot_without_latest = recent_hot[:-1] if len(recent_hot) > 1 else []
+
+            for snap in reversed(recent_hot_without_latest):
+                candidate = dict((snap.operator_essence_delta or {}).get("dominant_crystal_principle", {}) or {})
+                if candidate:
+                    resolved_crystal = candidate
+                    break
+
+        if not resolved_crystal:
+            resolved_crystal = dict((warm.operator_essence_delta or {}).get("dominant_crystal_principle", {}) or {})
+
+        if resolved_crystal:
+            effective_essence["dominant_crystal_principle"] = resolved_crystal
+        else:
+            effective_essence["dominant_crystal_principle"] = {}
+
         return {
             "operator_id": operator_id,
             "recall_context": {
-                "operator_essence_delta": latest.operator_essence_delta if latest and latest.operator_essence_delta else warm.operator_essence_delta,
+                "operator_essence_delta": effective_essence,
                 "open_threads": recent_threads[:max_open_threads],
                 "state_vector_shifts": recent_shifts[:max_state_vector_shifts],
                 "continuity_trend": warm.history[-3:],
