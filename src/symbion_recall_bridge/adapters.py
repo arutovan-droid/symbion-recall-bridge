@@ -32,12 +32,20 @@ def snapshot_from_distillation(
         for item in distilled.get("state_vector_shifts", [])
     ]
 
+    distilled_metadata = dict(distilled.get("metadata", {}) or {})
+
     metadata = {
-        "distilled_packets_total": distilled.get("metadata", {}).get("packets_total", 0),
+        "distilled_packets_total": distilled_metadata.get("packets_total", 0),
         "distilled_crystal_count": len(distilled.get("crystal_candidates", [])),
         "distilled_open_threads_count": len(open_threads),
         "distilled_state_vector_shifts_count": len(state_vector_shifts),
     }
+
+    # preserve selected metadata from upstream distillation/session close
+    if "density_profile" in distilled_metadata:
+        metadata["density_profile"] = distilled_metadata["density_profile"]
+    if "session_envelope" in distilled_metadata:
+        metadata["session_envelope"] = distilled_metadata["session_envelope"]
 
     return RecallSnapshot(
         operator_id=operator_id,

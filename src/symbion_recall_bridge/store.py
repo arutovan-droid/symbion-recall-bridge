@@ -57,6 +57,10 @@ class RecallHotStore:
         if snapshot.operator_essence_delta:
             warm.operator_essence_delta = snapshot.operator_essence_delta
 
+        density_profile = dict((snapshot.metadata or {}).get("density_profile", {}) or {})
+        if density_profile:
+            warm.metadata["density_profile"] = density_profile
+
         warm.open_threads = _dedupe_dict_list(warm.open_threads + snapshot.open_threads)
         warm.state_vector_shifts = _dedupe_dict_list(warm.state_vector_shifts + snapshot.state_vector_shifts)
         session_envelope = dict(snapshot.metadata.get("session_envelope", {})) if snapshot.metadata else {}
@@ -76,7 +80,9 @@ class RecallHotStore:
 
         warm.history.append(lifecycle_record)
 
+        existing_metadata = dict(warm.metadata or {})
         warm.metadata = {
+            **existing_metadata,
             "history_count": len(warm.history),
             "open_threads_count": len(warm.open_threads),
             "state_vector_shifts_count": len(warm.state_vector_shifts),
@@ -152,6 +158,7 @@ class RecallHotStore:
                     "open_threads": warm.open_threads[:max_open_threads],
                     "state_vector_shifts": warm.state_vector_shifts[:max_state_vector_shifts],
                     "continuity_trend": warm.history[-3:],
+                    "density_profile": dict((warm.metadata or {}).get("density_profile", {}) or {}),
                 },
                 "caps": {
                     "max_open_threads": max_open_threads,
@@ -205,6 +212,12 @@ class RecallHotStore:
         else:
             effective_essence["dominant_crystal_principle"] = {}
 
+        density_profile = dict((warm.metadata or {}).get("density_profile", {}) or {})
+        if latest:
+            latest_density = dict((latest.metadata or {}).get("density_profile", {}) or {})
+            if latest_density:
+                density_profile = latest_density
+
         return {
             "operator_id": operator_id,
             "recall_context": {
@@ -212,6 +225,7 @@ class RecallHotStore:
                 "open_threads": recent_threads[:max_open_threads],
                 "state_vector_shifts": recent_shifts[:max_state_vector_shifts],
                 "continuity_trend": warm.history[-3:],
+                "density_profile": density_profile,
             },
             "caps": {
                 "max_open_threads": max_open_threads,
